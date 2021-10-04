@@ -12,6 +12,7 @@ def wowEulerCalcNext(x_prev, y_prev, step):
     y_curr = y_prev + step * (y ** 2 + x * y - x ** 2) / (x ** 2)
     return y_curr
 
+# Runge-Kutta
 def rungeKuttaCalcNext(x_prev, y_prev, step):
     k1 = (y_prev ** 2 + x_prev * y_prev - x_prev ** 2) / (x_prev ** 2)
 
@@ -39,33 +40,25 @@ def calcGTE(exactYs, eulerYs):
         gtes.append(abs(eulerYs[i] - exactYs[i]))
     return gtes
 
-def calcEulerLTE(exactYs, x_init, step, epsilon):
+def calcLTE(exactYs, x_init, step, epsilon, method):
     ltes = [0]
     x_curr = x_init
-    for i in range(1, len(exactYs)):
-        curr_error = abs(eulerCalcNext(x_curr, exactYs[i - 1], step) - exactYs[i])
-        ltes.append(curr_error)
-        x_curr += step
+    if method == "euler":
+        for i in range(1, len(exactYs)):
+            curr_error = abs(eulerCalcNext(x_curr, exactYs[i - 1], step) - exactYs[i])
+            ltes.append(curr_error)
+            x_curr += step
+    elif method == "wowEuler":
+        for i in range(1, len(exactYs)):
+            curr_error = abs(wowEulerCalcNext(x_curr, exactYs[i - 1], step) - exactYs[i])
+            ltes.append(curr_error)
+            x_curr += step
+    else:
+        for i in range(1, len(exactYs)):
+            curr_error = abs(rungeKuttaCalcNext(x_curr, exactYs[i - 1], step) - exactYs[i])
+            ltes.append(curr_error)
+            x_curr += step
     return ltes
-
-def calcWowEulerLTE(exactYs, x_init, step, epsilon):
-    ltes = [0]
-    x_curr = x_init
-    for i in range(1, len(exactYs)):
-        curr_error = abs(wowEulerCalcNext(x_curr, exactYs[i - 1], step) - exactYs[i])
-        ltes.append(curr_error)
-        x_curr += step
-    return ltes
-
-def calcRKLTE(exactYs, x_init, step, epsilon):
-    ltes = [0]
-    x_curr = x_init
-    for i in range(1, len(exactYs)):
-        curr_error = abs(rungeKuttaCalcNext(x_curr, exactYs[i - 1], step) - exactYs[i])
-        ltes.append(curr_error)
-        x_curr += step
-    return ltes
-
 
 
 # Variables shared by all methods
@@ -81,9 +74,9 @@ rightBoundary = 1.5
 x_init = 1
 y_init = 2
 
+# Euler method
 exactYs = [y_init]
 
-# Euler method
 eulerApproximationXs = [x_init]
 eulerApproximationYs = [y_init]
 
@@ -92,10 +85,11 @@ x_curr = x_init + h1
 y_prev = y_init
 while x_curr <= rightBoundary + epsilon:
     exactYs.append(calcExactSolution(x_curr))
+    y_curr = rungeKuttaCalcNext(x_prev, y_prev, h1)
 
     eulerApproximationXs.append(x_curr)
-    y_curr = eulerCalcNext(x_prev, y_prev, h1)
     eulerApproximationYs.append(y_curr)
+
     x_prev = x_curr
     x_curr += h1
     y_prev = y_curr
@@ -103,81 +97,39 @@ while x_curr <= rightBoundary + epsilon:
 eulerGtes = calcGTE(exactYs, eulerApproximationYs)
 print(*eulerGtes)
 
-eulerLtes = calcEulerLTE(exactYs, x_init, h1, epsilon)
+eulerLtes = calcLTE(exactYs, x_init, h1, epsilon, "rk")
 print(*eulerLtes)
 
-# Improved Euler method
-wowEulerApproximationXsh1 = [x_init]
-wowEulerApproximationYsh1 = [y_init]
-
-x_prev = x_init
-x_curr = x_init + h1
-y_prev = y_init
-while x_curr <= rightBoundary + epsilon:
-    wowEulerApproximationXsh1.append(x_curr)
-    y_curr = wowEulerCalcNext(x_prev, y_prev, h1)
-    wowEulerApproximationYsh1.append(y_curr)
-    x_prev = x_curr
-    x_curr += h1
-    y_prev = y_curr
-
-print()
-print("Improved Euler ys:")
-print(*wowEulerApproximationYsh1)
-
-wowEulerGtes = calcGTE(exactYs, wowEulerApproximationYsh1)
-print(*wowEulerGtes)
-
-wowEulerLtes = calcWowEulerLTE(exactYs, x_init, h1, epsilon)
-print(*wowEulerLtes)
-
-wowEulerApproximationXsh2 = [x_init]
-wowEulerApproximationYsh2 = [y_init]
+# h2
+exactYs2 = [y_init]
+eulerApproximationXs2 = [x_init]
+eulerApproximationYs2 = [y_init]
 
 x_prev = x_init
 x_curr = x_init + h2
 y_prev = y_init
 while x_curr <= rightBoundary + epsilon:
-    wowEulerApproximationXsh2.append(x_curr)
-    y_curr = wowEulerCalcNext(x_prev, y_prev, h2)
-    wowEulerApproximationYsh2.append(y_curr)
+    exactYs2.append(calcExactSolution(x_curr))
+    y_curr = rungeKuttaCalcNext(x_prev, y_prev, h2)
+
+    eulerApproximationXs2.append(x_curr)
+    eulerApproximationYs2.append(y_curr)
+
     x_prev = x_curr
     x_curr += h2
     y_prev = y_curr
 
-print()
-print("Improved Euler ys:")
-print(*wowEulerApproximationYsh1)
+eulerGtes2 = calcGTE(exactYs2, eulerApproximationYs2)
+print(*eulerGtes2)
 
-wowEulerGtesh2 = calcGTE(exactYs, wowEulerApproximationYsh2)
-print(*wowEulerGtes)
+eulerLtes2 = calcLTE(exactYs2, x_init, h2, epsilon, "rk")
+print(*eulerLtes2)
 
-wowEulerLtesh2 = calcWowEulerLTE(exactYs, x_init, h2, epsilon)
-print(*wowEulerLtes)
+for i in range(1, len(eulerLtes)):
+    index = eulerApproximationXs2.index(eulerApproximationXs[i])
+    # print(len(eulerLtes), len(eulerLtes2))
+    print(eulerApproximationYs2[index])
+    print("x =", eulerApproximationXs[i], "\nLTE1 / LTE2:", eulerLtes[i] / eulerLtes2[index])
+    print("x =", eulerApproximationXs[i], "\nGTE1 / GTE2:", eulerGtes[i] / eulerGtes2[index])
+    print()
 
-# Runge-Kutta
-rgApproximationXs = [x_init]
-rgApproximationYs = [y_init]
-
-x_prev = x_init
-x_curr = x_init + h1
-y_prev = y_init
-while x_curr <= rightBoundary + epsilon:
-    rgApproximationXs.append(x_curr)
-    y_curr = rungeKuttaCalcNext(x_prev, y_prev, h1)
-    rgApproximationYs.append(y_curr)
-    x_prev = x_curr
-    x_curr += h1
-    y_prev = y_curr
-
-print()
-print("Runge Kutta ys:")
-print(*rgApproximationYs)
-print("Exact ys")
-print(*exactYs)
-
-rgGtes = calcGTE(exactYs, rgApproximationYs)
-print(*rgGtes)
-
-rgLtes = calcRKLTE(exactYs, x_init, h1, epsilon)
-print(*rgLtes)
